@@ -48,4 +48,104 @@ final class CustomLayout: UICollectionViewLayout {
     }
   }
   
+  override public class var layoutAttributesClass: AnyClass {
+    return CustomLayoutAttributes.self
+  }
+  
+  override public var collectionViewContentSize: CGSize {
+    return CGSize(width: collectionViewWidth, height: contentHeight)
+  }
+  
+  var settings = CustomLayoutSettings()
+  private var oldBounds = CGRect.zero
+  private var contentHeight = CGFloat()
+  private var cache = [Element: [IndexPath: CustomLayoutAttributes]]()
+  private var visibleLayoutAttributes = [CustomLayoutAttributes]()
+  private var zIndex = 0
+  
+  private var collectionViewHeight: CGFloat {
+    return collectionView!.frame.height
+  }
+  
+  private var collectionViewWidth: CGFloat {
+    return collectionView!.frame.width
+  }
+  
+  private var cellHeight: CGFloat {
+    guard let itemSize = settings.itemSize else {
+      return collectionViewHeight
+    }
+    return itemSize.height
+  }
+  
+  private var cellWidth: CGFloat {
+    guard let itemSize = settings.itemSize else {
+      return collectionViewWidth
+    }
+    return itemSize.width
+  }
+  
+  private var headerSize: CGSize {
+    guard let headerSize = settings.headerSize else {
+      return .zero
+    }
+    return headerSize
+  }
+  
+  private var menuSize: CGSize {
+    guard let menuSize = settings.menuSize else {
+      return .zero
+    }
+    return menuSize
+  }
+  
+  private var sectionsHeaderSize: CGSize {
+    guard let sectionsHeaderSize = settings.sectionsHeaderSize else {
+      return .zero
+    }
+    return sectionsHeaderSize
+  }
+  
+  private var sectionsFooterSize: CGSize {
+    guard let sectionsFooterSize = settings.sectionsFooterSize else {
+      return .zero
+    }
+    return sectionsFooterSize
+  }
+  
+  private var contentOffset: CGPoint {
+    return collectionView!.contentOffset
+  }
+  
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
