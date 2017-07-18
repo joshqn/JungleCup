@@ -31,6 +31,10 @@
 import UIKit
 
 final class JungleCupCollectionViewController: UICollectionViewController {
+  
+  var customLayout: CustomLayout? {
+    return collectionView?.collectionViewLayout as? CustomLayout
+  }
  
   // MARK: - Properties
   private let teams: [Team] = [Owls(), Giraffes(), Parrots(), Tigers()]
@@ -51,15 +55,38 @@ final class JungleCupCollectionViewController: UICollectionViewController {
 
 private extension JungleCupCollectionViewController {
 
-  func setupCollectionViewLayout() {
+  private func setupCollectionViewLayout() {
     guard let collectionView = collectionView,
-      let layout = collectionViewLayout as? UICollectionViewFlowLayout else {
+      let customLayout = customLayout else {
         return
     }
-
-    layout.sectionHeadersPinToVisibleBounds = true
-    layout.itemSize = CGSize(width: collectionView.frame.width, height: 200)
-    layout.minimumLineSpacing = 2
+    // 1
+    collectionView.register(
+      UINib(nibName: "HeaderView", bundle: nil),
+      forSupplementaryViewOfKind: CustomLayout.Element.header.kind,
+      withReuseIdentifier: CustomLayout.Element.header.id
+    )
+    collectionView.register(
+      UINib(nibName: "MenuView", bundle: nil),
+      forSupplementaryViewOfKind: CustomLayout.Element.menu.kind,
+      withReuseIdentifier: CustomLayout.Element.menu.id
+    )
+    
+    // 2
+    customLayout.settings.itemSize = CGSize(width: collectionView.frame.width, height: 200)
+    customLayout.settings.headerSize = CGSize(width: collectionView.frame.width, height: 300)
+    customLayout.settings.menuSize = CGSize(width: collectionView.frame.width, height: 70)
+    customLayout.settings.sectionsHeaderSize = CGSize(width: collectionView.frame.width, height: 50)
+    customLayout.settings.sectionsFooterSize = CGSize(width: collectionView.frame.width, height: 50)
+    customLayout.settings.isHeaderStretchy = true
+    customLayout.settings.isAlphaOnHeaderActive = true
+    customLayout.settings.headerOverlayMaxAlphaValue = CGFloat(0)
+    customLayout.settings.isMenuSticky = true
+    customLayout.settings.isSectionHeadersSticky = true
+    customLayout.settings.isParallaxOnCellsEnabled = true
+    customLayout.settings.maxParallaxOffset = 60
+    customLayout.settings.minimumInteritemSpacing = 0
+    customLayout.settings.minimumLineSpacing = 3
   }
 }
 
@@ -97,6 +124,23 @@ extension JungleCupCollectionViewController {
         sectionFooterView.mark.text = "Strength: \(teams[displayedTeam].marks[indexPath.section])"
       }
       return supplementaryView
+      
+    case CustomLayout.Element.header.kind:
+      let topHeaderView = collectionView.dequeueReusableSupplementaryView(
+        ofKind: kind,
+        withReuseIdentifier: CustomLayout.Element.header.id,
+        for: indexPath)
+      return topHeaderView
+      
+    case CustomLayout.Element.menu.kind:
+      let menuView = collectionView.dequeueReusableSupplementaryView(
+        ofKind: kind,
+        withReuseIdentifier: CustomLayout.Element.menu.id,
+        for: indexPath)
+      if let menuView = menuView as? MenuView {
+        menuView.delegate = self
+      }
+      return menuView
 
     default:
       fatalError("Unexpected element kind")
