@@ -80,7 +80,7 @@ private extension JungleCupCollectionViewController {
     customLayout.settings.sectionsFooterSize = CGSize(width: collectionView.frame.width, height: 50)
     customLayout.settings.isHeaderStretchy = true
     customLayout.settings.isAlphaOnHeaderActive = true
-    customLayout.settings.headerOverlayMaxAlphaValue = CGFloat(0)
+    customLayout.settings.headerOverlayMaxAlphaValue = CGFloat(0.6)
     customLayout.settings.isMenuSticky = true
     customLayout.settings.isSectionHeadersSticky = true
     customLayout.settings.isParallaxOnCellsEnabled = true

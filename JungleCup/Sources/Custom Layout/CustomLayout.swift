@@ -244,13 +244,95 @@ extension CustomLayout {
   
   override public func layoutAttributesForElements(
     in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+    
+    guard let collectionView = collectionView else {
+      return nil
+    }
     visibleLayoutAttributes.removeAll(keepingCapacity: true)
-    for (_, elementInfos) in cache {
-      for (_, attributes) in elementInfos where attributes.frame.intersects(rect) {
-        visibleLayoutAttributes.append(attributes)
+    // 1
+    let halfHeight = collectionViewHeight * 0.5
+    let halfCellHeight = cellHeight * 0.5
+    // 2
+    for (type, elementInfos) in cache {
+      for (indexPath, attributes) in elementInfos {
+        // 3
+        attributes.parallax = .identity
+        attributes.transform = .identity
+        // 4
+        updateSupplementaryViews(
+          type,
+          attributes: attributes,
+          collectionView: collectionView,
+          indexPath: indexPath)
+        if attributes.frame.intersects(rect) {
+          // 5
+          if type == .cell,
+            settings.isParallaxOnCellsEnabled {
+            updateCells(attributes, halfHeight: halfHeight, halfCellHeight: halfCellHeight)
+          }
+          visibleLayoutAttributes.append(attributes)
+        }
       }
     }
     return visibleLayoutAttributes
+  }
+  
+  private func updateSupplementaryViews(_ type: Element,
+                                        attributes: CustomLayoutAttributes,
+                                        collectionView: UICollectionView,
+                                        indexPath: IndexPath) {
+    if type == .sectionHeader,
+      settings.isSectionHeadersSticky {
+      let upperLimit =
+        CGFloat(collectionView.numberOfItems(inSection: indexPath.section))
+          * (cellHeight + settings.minimumLineSpacing)
+      let menuOffset = settings.isMenuSticky ? menuSize.height : 0
+      attributes.transform =  CGAffineTransform(
+        translationX: 0,
+        y: min(upperLimit,
+               max(0, contentOffset.y - attributes.initialOrigin.y + menuOffset)))
+    }
+    else if type == .header,
+      settings.isHeaderStretchy {
+      let updatedHeight = min(
+        collectionView.frame.height,
+        max(headerSize.height, headerSize.height - contentOffset.y))
+      let scaleFactor = updatedHeight / headerSize.height
+      let delta = (updatedHeight - headerSize.height) / 2
+      let scale = CGAffineTransform(scaleX: scaleFactor, y: scaleFactor)
+      let translation = CGAffineTransform(
+        translationX: 0,
+        y: min(contentOffset.y, headerSize.height) + delta)
+      attributes.transform = scale.concatenating(translation)
+      if settings.isAlphaOnHeaderActive {
+        attributes.headerOverlayAlpha = min(
+          settings.headerOverlayMaxAlphaValue,
+          contentOffset.y / headerSize.height)
+      }
+    }
+    else if type == .menu,
+      settings.isMenuSticky {
+      attributes.transform = CGAffineTransform(
+        translationX: 0,
+        y: max(attributes.initialOrigin.y, contentOffset.y) - headerSize.height)
+    }
+  }
+  
+  private func updateCells(_ attributes: CustomLayoutAttributes,
+                           halfHeight: CGFloat,
+                           halfCellHeight: CGFloat) {
+
+    let cellDistanceFromCenter = attributes.center.y - contentOffset.y - halfHeight
+    
+
+    let parallaxOffset = -(settings.maxParallaxOffset * cellDistanceFromCenter)
+      / (halfHeight + halfCellHeight)
+
+    let boundedParallaxOffset = min(
+      max(-settings.maxParallaxOffset, parallaxOffset),
+      settings.maxParallaxOffset)
+
+    attributes.parallax = CGAffineTransform(translationX: 0, y: boundedParallaxOffset)
   }
 }
 
